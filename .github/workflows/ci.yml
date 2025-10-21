@@ -41,8 +41,3 @@ jobs:
     - name: Build binary
       run: go build -v -o bin/mcp-vosdroits ./cmd/server
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: mcp-vosdroits
-        path: bin/mcp-vosdroits
