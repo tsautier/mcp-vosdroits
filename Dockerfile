@@ -14,10 +14,10 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o mcp-vosdroits ./cmd/server
 
 # Production stage
-FROM alpine:latest
+FROM scratch
 
-# Install CA certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates
+# Copy binary from builder
+COPY --from=builder /build/mcp-vosdroits .
 
 WORKDIR /app
 
