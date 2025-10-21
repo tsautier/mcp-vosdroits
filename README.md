@@ -89,6 +89,81 @@ Configure custom environment variables for logging and timeout:
 
 After adding the configuration, restart VSCode or reload the window. The server will be available in GitHub Copilot Chat, and you can use the available tools to query French public service information.
 
+### GitHub Copilot CLI
+
+To use this MCP server with GitHub Copilot CLI, add the configuration to your MCP settings file (`~/.copilot/mcp-config.json`).
+
+**Using Docker Image (Recommended):**
+
+```json
+{
+  "mcpServers": {
+    "vosdroits": {
+      "type": "local",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/guigui42/mcp-vosdroits:latest"
+      ],
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}
+```
+
+**Using Local Binary:**
+
+If you've built the server from source:
+
+```json
+{
+  "mcpServers": {
+    "vosdroits": {
+      "type": "local",
+      "command": "/absolute/path/to/mcp-vosdroits/bin/mcp-vosdroits",
+      "args": [],
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}
+```
+
+**With Environment Variables:**
+
+Configure custom environment variables for logging and timeout:
+
+```json
+{
+  "mcpServers": {
+    "vosdroits": {
+      "type": "local",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/guigui42/mcp-vosdroits:latest"
+      ],
+      "env": {
+        "LOG_LEVEL": "debug",
+        "HTTP_TIMEOUT": "60s"
+      },
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}
+```
+
+After adding the configuration, restart your terminal or run `gh copilot reload` to load the new MCP server.
+
 ## Available Tools
 
 The server provides three MCP tools:
