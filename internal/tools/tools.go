@@ -35,7 +35,7 @@ func RegisterTools(server *mcp.Server, cfg *config.Config) error {
 
 // SearchProceduresInput defines the input schema for search_procedures.
 type SearchProceduresInput struct {
-	Query string `json:"query" jsonschema:"required,description=Search query for procedures,example=carte d'identité"`
+	Query string `json:"query" jsonschema:"description=Search query for procedures"`
 	Limit int    `json:"limit,omitempty" jsonschema:"minimum=1,maximum=100,description=Maximum number of results to return,default=10"`
 }
 
@@ -101,7 +101,7 @@ func registerSearchProcedures(server *mcp.Server, httpClient *client.Client) err
 
 // GetArticleInput defines the input schema for get_article.
 type GetArticleInput struct {
-	URL string `json:"url" jsonschema:"required,format=uri,description=URL of the article to retrieve"`
+	URL string `json:"url" jsonschema:"format=uri,description=URL of the article to retrieve"`
 }
 
 // GetArticleOutput defines the output schema for get_article.
