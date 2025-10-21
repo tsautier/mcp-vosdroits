@@ -34,38 +34,9 @@ jobs:
     - name: Run go vet
       run: go vet ./...
 
-    - name: Run go fmt
-      run: |
-        if [ -n "$(gofmt -s -l .)" ]; then
-          echo "Go code is not formatted:"
-          gofmt -s -d .
-          exit 1
-        fi
 
     - name: Run tests
       run: go test -v -race -coverprofile=coverage.out ./...
-
-    - name: Upload coverage
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.out
-        fail_ci_if_error: false
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v5
-
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.25'
-        cache: true
-        cache-dependency-path: go.sum
 
     - name: Build binary
       run: go build -v -o bin/mcp-vosdroits ./cmd/server

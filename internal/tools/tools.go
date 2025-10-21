@@ -35,20 +35,20 @@ func RegisterTools(server *mcp.Server, cfg *config.Config) error {
 
 // SearchProceduresInput defines the input schema for search_procedures.
 type SearchProceduresInput struct {
-	Query string `json:"query" jsonschema:"description=Search query for procedures"`
-	Limit int    `json:"limit,omitempty" jsonschema:"minimum=1,maximum=100,description=Maximum number of results to return,default=10"`
+	Query string `json:"query" jsonschema:"Search query for procedures"`
+	Limit int    `json:"limit,omitempty" jsonschema:"Maximum number of results to return (1-100)"`
 }
 
 // SearchProceduresOutput defines the output schema for search_procedures.
 type SearchProceduresOutput struct {
-	Results []ProcedureResult `json:"results" jsonschema:"description=List of matching procedures"`
+	Results []ProcedureResult `json:"results" jsonschema:"List of matching procedures"`
 }
 
 // ProcedureResult represents a single procedure search result.
 type ProcedureResult struct {
-	Title       string `json:"title" jsonschema:"description=Title of the procedure"`
-	URL         string `json:"url" jsonschema:"description=URL to the procedure page"`
-	Description string `json:"description" jsonschema:"description=Brief description of the procedure"`
+	Title       string `json:"title" jsonschema:"Title of the procedure"`
+	URL         string `json:"url" jsonschema:"URL to the procedure page"`
+	Description string `json:"description" jsonschema:"Brief description of the procedure"`
 }
 
 func registerSearchProcedures(server *mcp.Server, httpClient *client.Client) error {
@@ -101,14 +101,14 @@ func registerSearchProcedures(server *mcp.Server, httpClient *client.Client) err
 
 // GetArticleInput defines the input schema for get_article.
 type GetArticleInput struct {
-	URL string `json:"url" jsonschema:"format=uri,description=URL of the article to retrieve"`
+	URL string `json:"url" jsonschema:"URL of the article to retrieve"`
 }
 
 // GetArticleOutput defines the output schema for get_article.
 type GetArticleOutput struct {
-	Title   string `json:"title" jsonschema:"description=Title of the article"`
-	Content string `json:"content" jsonschema:"description=Full content of the article"`
-	URL     string `json:"url" jsonschema:"description=URL of the article"`
+	Title   string `json:"title" jsonschema:"Title of the article"`
+	Content string `json:"content" jsonschema:"Full content of the article"`
+	URL     string `json:"url" jsonschema:"URL of the article"`
 }
 
 func registerGetArticle(server *mcp.Server, httpClient *client.Client) error {
@@ -149,13 +149,13 @@ func registerGetArticle(server *mcp.Server, httpClient *client.Client) error {
 
 // ListCategoriesOutput defines the output schema for list_categories.
 type ListCategoriesOutput struct {
-	Categories []Category `json:"categories" jsonschema:"description=List of available categories"`
+	Categories []Category `json:"categories" jsonschema:"List of available categories"`
 }
 
 // Category represents a service category.
 type Category struct {
-	Name        string `json:"name" jsonschema:"description=Name of the category"`
-	Description string `json:"description" jsonschema:"description=Description of the category"`
+	Name        string `json:"name" jsonschema:"Name of the category"`
+	Description string `json:"description" jsonschema:"Description of the category"`
 }
 
 type ListCategoriesInput struct{}
