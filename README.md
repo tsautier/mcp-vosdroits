@@ -1,14 +1,22 @@
 # VosDroits MCP Server
 
-A Model Context Protocol (MCP) server that provides search and retrieval capabilities for French public service information from service-public.gouv.fr.
+A Model Context Protocol (MCP) server that provides search and retrieval capabilities for French public service and tax information from service-public.gouv.fr and impots.gouv.fr.
 
 ## Description
 
-This MCP server enables AI assistants to search and retrieve official French administrative procedures and information. Built with Go and powered by intelligent web scraping, it provides three main capabilities:
+This MCP server enables AI assistants to search and retrieve official French administrative procedures and tax information. Built with Go and powered by intelligent web scraping, it provides six main capabilities:
 
-- **Search Procedures**: Find relevant public service procedures and articles
-- **Get Article Details**: Retrieve complete information from specific articles
-- **List Categories**: Browse available categories of public service information
+### Service-Public.gouv.fr Tools
+
+- **search_procedures**: Find relevant public service procedures and articles
+- **get_article**: Retrieve complete information from specific service-public.gouv.fr articles
+- **list_categories**: Browse available categories of public service information
+
+### Impots.gouv.fr Tools
+
+- **search_impots**: Search for tax forms, articles, and procedures on impots.gouv.fr
+- **get_impots_article**: Retrieve detailed information from specific tax articles or forms
+- **list_impots_categories**: List available tax service categories
 
 ## Installation
 
@@ -166,19 +174,78 @@ After adding the configuration, restart your terminal or run `gh copilot reload`
 
 ## Available Tools
 
-The server provides three MCP tools:
+The server provides six MCP tools across two domains:
 
-### 1. search_procedures
+### Service-Public.gouv.fr Tools
+
+#### 1. search_procedures
 
 Search for procedures on service-public.gouv.fr.
 
-### 2. get_article
+**Input:**
+- `query` (string): Search query for procedures
+- `limit` (int, optional): Maximum number of results to return (1-100, default: 10)
 
-Retrieve detailed information from a specific article URL.
+**Output:**
+- `results`: Array of matching procedures with title, URL, and description
 
-### 3. list_categories
+#### 2. get_article
+
+Retrieve detailed information from a specific article URL on service-public.gouv.fr.
+
+**Input:**
+- `url` (string): URL of the article to retrieve
+
+**Output:**
+- `title`: Article title
+- `content`: Full article content
+- `url`: Article URL
+
+#### 3. list_categories
 
 List available categories of public service information.
+
+**Output:**
+- `categories`: Array of available categories with name and description
+
+### Impots.gouv.fr Tools
+
+#### 4. search_impots
+
+Search for tax forms, articles, and procedures on impots.gouv.fr.
+
+**Input:**
+- `query` (string): Search query for tax information and forms (e.g., "formulaire 2042", "PEA")
+- `limit` (int, optional): Maximum number of results to return (1-100, default: 10)
+
+**Output:**
+- `results`: Array of matching tax documents with title, URL, description, type, and date
+
+**Example queries:**
+- "formulaire 2042" - Find the income tax declaration form
+- "PEA" - Find information about equity savings plans
+- "crédit d'impôt" - Find information about tax credits
+
+#### 5. get_impots_article
+
+Retrieve detailed information from a specific tax article or form URL on impots.gouv.fr.
+
+**Input:**
+- `url` (string): URL of the tax article or form to retrieve
+
+**Output:**
+- `title`: Document title
+- `content`: Full document content
+- `url`: Document URL
+- `type`: Type of document (Formulaire, Article, etc.)
+- `description`: Brief description
+
+#### 6. list_impots_categories
+
+List available categories of tax information on impots.gouv.fr.
+
+**Output:**
+- `categories`: Array of tax categories (Particulier, Professionnel, Partenaire, Collectivité, International) with name, description, and URL
 
 ## Screenshots
 <img width="1633" height="1292" alt="20251021212600" src="https://github.com/user-attachments/assets/12eb095f-37e6-4b18-89ad-767f1bf558a5" />

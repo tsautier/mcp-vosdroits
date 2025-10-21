@@ -12,7 +12,7 @@ import (
 
 // RegisterTools registers all available MCP tools with the server.
 func RegisterTools(server *mcp.Server, cfg *config.Config) error {
-	// Create HTTP client
+	// Create HTTP client for service-public.gouv.fr
 	httpClient := client.New(cfg.HTTPTimeout)
 
 	// Register search_procedures tool
@@ -28,6 +28,14 @@ func RegisterTools(server *mcp.Server, cfg *config.Config) error {
 	// Register list_categories tool
 	if err := registerListCategories(server, httpClient); err != nil {
 		return fmt.Errorf("failed to register list_categories: %w", err)
+	}
+
+	// Create HTTP client for impots.gouv.fr
+	impotsClient := client.NewImpotsClient(cfg.HTTPTimeout)
+
+	// Register impots.gouv.fr tools
+	if err := RegisterImpotsTools(server, impotsClient); err != nil {
+		return fmt.Errorf("failed to register impots tools: %w", err)
 	}
 
 	return nil

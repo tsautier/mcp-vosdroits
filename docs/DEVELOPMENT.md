@@ -94,10 +94,17 @@ mcp-vosdroits/
 │       └── main.go          # Server entry point
 ├── internal/
 │   ├── tools/               # MCP tool implementations
-│   ├── client/              # Web scraping client using Colly
+│   │   ├── tools.go         # Service-public.gouv.fr tools
+│   │   ├── impots_tools.go  # Impots.gouv.fr tools
+│   │   └── *_test.go        # Tool tests
+│   ├── client/              # Web scraping clients using Colly
+│   │   ├── client.go        # Service-public.gouv.fr client
+│   │   ├── impots_client.go # Impots.gouv.fr client
+│   │   └── *_test.go        # Client tests
 │   └── config/              # Configuration management
 ├── docs/
-│   ├── SCRAPING.md          # Scraping implementation details
+│   ├── SCRAPING.md          # Service-public.gouv.fr scraping details
+│   ├── IMPOTS_SCRAPING.md   # Impots.gouv.fr scraping details
 │   ├── COLLY_INTEGRATION.md # Colly integration guide
 │   ├── quick-start.md       # Quick start guide
 │   └── web-scraping.md      # Web scraping overview
