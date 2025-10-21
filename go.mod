@@ -1,6 +1,6 @@
 module github.com/guigui42/mcp-vosdroits
 
-go 1.23.0
+go 1.25.1
 
 require github.com/modelcontextprotocol/go-sdk v0.0.0-20251020185824-cfa7a515a9bc
 
