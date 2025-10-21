@@ -22,6 +22,8 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version: ${{ matrix.go-version }}
+        cache: true
+        cache-dependency-path: go.sum
 
     - name: Download dependencies
       run: go mod download
@@ -62,6 +64,8 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version: '1.25'
+        cache: true
+        cache-dependency-path: go.sum
 
     - name: Build binary
       run: go build -v -o bin/mcp-vosdroits ./cmd/server

@@ -6,6 +6,11 @@ on:
     tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
@@ -15,6 +20,11 @@ jobs:
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    # Only run if CI workflow succeeded or this was triggered by push/PR
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     permissions:
       contents: read
       packages: write
@@ -55,3 +65,5 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
