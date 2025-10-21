@@ -39,6 +39,18 @@ go build -o bin/mcp-vosdroits ./cmd/server
 
 ### Using Docker
 
+Pull and run the official image from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/guigui42/mcp-vosdroits:latest
+
+# Run the container
+docker run -i ghcr.io/guigui42/mcp-vosdroits:latest
+```
+
+Or build locally:
+
 ```bash
 # Build the Docker image
 docker build -t mcp-vosdroits .
@@ -48,6 +60,74 @@ docker run -i mcp-vosdroits
 ```
 
 ## Usage
+
+### VSCode with GitHub Copilot
+
+To use this MCP server with GitHub Copilot in VSCode, you need to configure it in your MCP settings. See the [VSCode MCP documentation](https://code.visualstudio.com/docs/copilot/customization/mcp-servers) for detailed information.
+
+#### Click the button to install:
+
+[Install Server - VS Code](https://insiders.vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522vosdroits%2522%252C%2522command%2522%253A%2522docker%2522%252C%2522args%2522%253A%255B%2522run%2522%252C%2522-i%2522%252C%2522--rm%2522%252C%2522ghcr.io%252Fguigui42%252Fmcp-vosdroits%253Alatest%2522%255D%257D) [Install Server - VS Code Insiders](https://insiders.vscode.dev/redirect?url=vscode-insiders%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522vosdroits%2522%252C%2522command%2522%253A%2522docker%2522%252C%2522args%2522%253A%255B%2522run%2522%252C%2522-i%2522%252C%2522--rm%2522%252C%2522ghcr.io%252Fguigui42%252Fmcp-vosdroits%253Alatest%2522%255D%257D)
+
+#### Or install manually:
+
+Follow the [MCP install guide](https://code.visualstudio.com/docs/copilot/customization/mcp-servers), and use the standard config below. The configuration should be added to your MCP settings file (typically `~/Library/Application Support/Code/User/mcp.json` on macOS).
+
+**Using Docker Image (Recommended):**
+
+```json
+{
+  "servers": {
+    "vosdroits": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/guigui42/mcp-vosdroits:latest"
+      ]
+    }
+  }
+}
+```
+
+**Using Local Binary:**
+
+If you've built the server from source:
+
+```json
+{
+  "servers": {
+    "vosdroits": {
+      "command": "/absolute/path/to/mcp-vosdroits/bin/mcp-vosdroits"
+    }
+  }
+}
+```
+
+**With Environment Variables:**
+
+Configure custom environment variables for logging and timeout:
+
+```json
+{
+  "servers": {
+    "vosdroits": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "LOG_LEVEL=debug",
+        "-e", "HTTP_TIMEOUT=60s",
+        "ghcr.io/guigui42/mcp-vosdroits:latest"
+      ]
+    }
+  }
+}
+```
+
+After adding the configuration, restart VSCode or reload the window. The server will be available in GitHub Copilot Chat, and you can use tools like `search_procedures`, `get_article`, and `list_categories` to query French public service information.
 
 ### Stdio Transport (Default)
 
@@ -235,6 +315,24 @@ See [Web Scraping Documentation](docs/web-scraping.md) for more details.
 
 ## Docker
 
+### Using Pre-built Images
+
+Images are automatically published to GitHub Container Registry:
+
+```bash
+# Pull the latest stable version
+docker pull ghcr.io/guigui42/mcp-vosdroits:latest
+
+# Pull a specific version
+docker pull ghcr.io/guigui42/mcp-vosdroits:v1.0.0
+
+# Run with stdio transport
+docker run -i --rm ghcr.io/guigui42/mcp-vosdroits:latest
+
+# Run with HTTP transport
+docker run -p 8080:8080 -e HTTP_PORT=8080 --rm ghcr.io/guigui42/mcp-vosdroits:latest
+```
+
 ### Building the Image
 
 ```bash
@@ -251,9 +349,19 @@ docker run -i mcp-vosdroits:latest
 docker run -p 8080:8080 -e HTTP_PORT=8080 mcp-vosdroits:latest
 ```
 
+### Available Tags
+
+- `latest` - Latest stable version from the main branch
+- `v*.*.*` - Specific semantic versions (e.g., v1.0.0)
+- `sha-<commit>` - Specific commit builds
+- `main` - Latest build from main branch
+
 ### Publishing to GitHub Container Registry
 
-Images are automatically published to `ghcr.io/guigui42/mcp-vosdroits` via GitHub Actions.
+Images are automatically published to `ghcr.io/guigui42/mcp-vosdroits` via GitHub Actions on:
+- Push to main branch (after CI passes)
+- Version tags (v*)
+- Direct pushes to tags
 
 ## Contributing
 
