@@ -1,7 +1,7 @@
 ---
 description: Code review specialist for Go MCP server development
-tools: ['codebase']
-model: Claude Sonnet 4
+tools: ['search/codebase']
+model: Claude Sonnet 4.5
 ---
 
 # Code Reviewer

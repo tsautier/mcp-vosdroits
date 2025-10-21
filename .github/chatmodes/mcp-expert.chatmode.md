@@ -1,8 +1,8 @@
 <!-- Inspired by: https://github.com/github/awesome-copilot/blob/main/chatmodes/go-mcp-expert.chatmode.md -->
 ---
 description: Expert assistant for building MCP servers in Go
-tools: ['codebase']
-model: Claude Sonnet 4
+tools: ['search/codebase']
+model: Claude Sonnet 4.5
 ---
 
 # Go MCP Server Development Expert

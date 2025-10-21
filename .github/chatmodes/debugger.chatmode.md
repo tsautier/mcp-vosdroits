@@ -1,7 +1,7 @@
 ---
 description: Debugging specialist for Go MCP server issues
-tools: ['codebase']
-model: Claude Sonnet 4
+tools: ['search/codebase']
+model: Claude Sonnet 4.5
 ---
 
 # Debugging Expert
