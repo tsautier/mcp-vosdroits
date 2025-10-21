@@ -105,6 +105,11 @@ Retrieve detailed information from a specific article URL.
 
 List available categories of public service information.
 
+## Screenshots
+<img width="1633" height="1292" alt="20251021212600" src="https://github.com/user-attachments/assets/12eb095f-37e6-4b18-89ad-767f1bf558a5" />
+
+
+
 ## Documentation
 
 For developers and contributors:
