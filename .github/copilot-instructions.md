@@ -12,6 +12,7 @@ This is a Model Context Protocol (MCP) server written in Go that provides search
 
 Always use Context7 to use the latest best practices and versions.
 Generated Git Commit messages should follow conventional commits format (short 1 liner but explicit).
+Documentation should be clear and concise and in the docs/ folder (as subfolders as needed).
 
 ## Core Functionality
 

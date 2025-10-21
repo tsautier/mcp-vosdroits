@@ -4,9 +4,17 @@ A Model Context Protocol (MCP) server written in Go that provides search and ret
 
 ## Features
 
-- **Search Procedures**: Search for French public service procedures
-- **Get Article Details**: Retrieve detailed information from specific articles
+- **Search Procedures**: Search for French public service procedures using intelligent web scraping
+- **Get Article Details**: Retrieve detailed information from specific articles with HTML parsing
 - **List Categories**: Browse available categories of public service information
+- **Web Scraping**: Powered by [Colly](https://github.com/gocolly/colly) for robust and respectful scraping
+
+## Technology Stack
+
+- **Language**: Go 1.25+
+- **MCP Framework**: [github.com/modelcontextprotocol/go-sdk](https://github.com/modelcontextprotocol/go-sdk)
+- **Web Scraping**: [Colly v2](https://github.com/gocolly/colly) - Fast and elegant scraping framework
+- **Deployment**: Docker with multi-stage builds
 
 ## Prerequisites
 
@@ -134,6 +142,27 @@ List available categories of public service information.
 
 ## Development
 
+### Local Testing
+
+The easiest way to test the MCP server locally is using the MCP Inspector:
+
+```bash
+# Install MCP Inspector globally (one-time setup)
+npm install -g @modelcontextprotocol/inspector
+
+# Build your server
+make build
+
+# Run the inspector with your server
+npx @modelcontextprotocol/inspector ./bin/mcp-vosdroits
+```
+
+The MCP Inspector provides a web interface where you can:
+- See all available tools
+- Test each tool with different inputs
+- View responses in real-time
+- Debug any issues
+
 ### Running Tests
 
 ```bash
@@ -156,15 +185,27 @@ mcp-vosdroits/
 │       └── main.go          # Server entry point
 ├── internal/
 │   ├── tools/               # MCP tool implementations
-│   ├── client/              # HTTP client for service-public.gouv.fr
+│   ├── client/              # Web scraping client using Colly
 │   └── config/              # Configuration management
+├── docs/
+│   ├── SCRAPING.md          # Scraping implementation details
+│   ├── COLLY_INTEGRATION.md # Colly integration guide
+│   ├── quick-start.md       # Quick start guide
+│   └── web-scraping.md      # Web scraping overview
 ├── .github/
 │   ├── workflows/           # GitHub Actions workflows
 │   └── copilot-instructions.md
 ├── Dockerfile               # Multi-stage Docker build
 ├── go.mod                   # Go module definition
-└── README.md               # This file
+└── README.md                # This file
 ```
+
+## Documentation
+
+- [Web Scraping Implementation](docs/SCRAPING.md) - Technical details on service-public.gouv.fr scraping
+- [Colly Integration Guide](docs/COLLY_INTEGRATION.md) - Detailed documentation on Colly integration and scraping strategy
+- [Quick Start Guide](docs/quick-start.md) - Getting started with development
+- [GitHub Copilot Instructions](.github/copilot-instructions.md) - Development guidelines for AI assistance
 
 ### Code Quality
 
@@ -180,6 +221,17 @@ go vet ./...
 # Tidy dependencies
 go mod tidy
 ```
+
+## Web Scraping
+
+This server uses [Colly](https://github.com/gocolly/colly) for respectful and efficient web scraping:
+
+- **Rate Limited**: 1 request per second to avoid overwhelming the target server
+- **Context-Aware**: Supports cancellation via Go contexts
+- **Robust**: Handles errors gracefully with fallback mechanisms
+- **CSS Selectors**: Flexible HTML parsing for extracting structured data
+
+See [Web Scraping Documentation](docs/web-scraping.md) for more details.
 
 ## Docker
 
