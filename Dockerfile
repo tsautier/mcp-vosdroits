@@ -23,10 +23,11 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath -ldflags="-w -s" -o mcp-vosdroits ./cmd/server
 
 # Production stage
-FROM scratch
+FROM alpine:latest
 
-# Copy binary from builder
-COPY --from=builder /build/mcp-vosdroits .
+# Install CA certificates for HTTPS requests
+RUN apk --no-cache add ca-certificates tzdata && \
+    adduser -D -u 1000 appuser
 
 WORKDIR /app
 
@@ -34,7 +35,7 @@ WORKDIR /app
 COPY --from=builder /build/mcp-vosdroits .
 
 # Run as non-root user
-USER nobody
+USER appuser
 
 # Set default environment variables
 ENV SERVER_NAME=vosdroits \
