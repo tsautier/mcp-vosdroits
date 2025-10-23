@@ -68,6 +68,9 @@ func (c *ImpotsClient) SearchImpots(ctx context.Context, query string, limit int
 
 	scraper := c.collector.Clone()
 
+	// Allow URL revisits to prevent "already visited" errors on repeated calls
+	scraper.AllowURLRevisit = true
+
 	done := make(chan struct{})
 	defer close(done)
 
@@ -202,6 +205,9 @@ func (c *ImpotsClient) GetImpotsArticle(ctx context.Context, articleURL string) 
 
 	scraper := c.collector.Clone()
 
+	// Allow URL revisits to prevent "already visited" errors on repeated calls
+	scraper.AllowURLRevisit = true
+
 	done := make(chan struct{})
 	defer close(done)
 
@@ -299,6 +305,9 @@ func (c *ImpotsClient) ListImpotsCategories(ctx context.Context) ([]ImpotsCatego
 	errorChan := make(chan error, 1)
 
 	scraper := c.collector.Clone()
+
+	// Allow URL revisits to prevent "already visited" errors on repeated calls
+	scraper.AllowURLRevisit = true
 
 	done := make(chan struct{})
 	defer close(done)

@@ -78,6 +78,9 @@ func (c *Client) SearchProcedures(ctx context.Context, query string, limit int) 
 	// Clone the collector to avoid conflicts
 	scraper := c.collector.Clone()
 
+	// Allow URL revisits to prevent "already visited" errors on repeated calls
+	scraper.AllowURLRevisit = true
+
 	// Set up context cancellation
 	done := make(chan struct{})
 	defer close(done)
@@ -245,6 +248,9 @@ func (c *Client) GetArticle(ctx context.Context, articleURL string) (*Article, e
 	// Clone the collector
 	scraper := c.collector.Clone()
 
+	// Allow URL revisits to prevent "already visited" errors on repeated calls
+	scraper.AllowURLRevisit = true
+
 	// Set up context cancellation
 	done := make(chan struct{})
 	defer close(done)
@@ -365,6 +371,9 @@ func (c *Client) ListCategories(ctx context.Context) ([]CategoryInfo, error) {
 	// Clone the collector
 	scraper := c.collector.Clone()
 
+	// Allow URL revisits to prevent "already visited" errors on repeated calls
+	scraper.AllowURLRevisit = true
+
 	// Set up context cancellation
 	done := make(chan struct{})
 	defer close(done)
@@ -447,4 +456,321 @@ func (c *Client) getDefaultCategories() []CategoryInfo {
 			Description: "Information and procedures for associations - creation, financing, management, etc.",
 		},
 	}
+}
+
+// LifeEvent represents a life event situation (événement de vie).
+type LifeEvent struct {
+	Title       string
+	URL         string
+	Description string
+}
+
+// ListLifeEvents retrieves all available life events from the "Comment faire si" page.
+func (c *Client) ListLifeEvents(ctx context.Context) ([]LifeEvent, error) {
+	// Check context cancellation
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	var events []LifeEvent
+	errorChan := make(chan error, 1)
+
+	// Clone the collector and clear visited URLs to allow re-visiting
+	scraper := c.collector.Clone()
+
+	// Clear visited URLs - this is crucial for allowing the same URL to be visited
+	// multiple times when the tool is called repeatedly
+	scraper.AllowURLRevisit = true
+
+	// Set up context cancellation
+	done := make(chan struct{})
+	defer close(done)
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			scraper = nil
+		case <-done:
+		}
+	}()
+
+	// Extract life event tiles from the main page
+	// The tiles link to fiche pratique pages (F-URLs like F16225)
+	scraper.OnHTML("a.fr-tile__link", func(e *colly.HTMLElement) {
+		// Get the link
+		href := e.Attr("href")
+		if href == "" {
+			return
+		}
+
+		// Only process links that are fiche pratique pages (F-URLs)
+		// Fiche pratique URLs have the pattern /particuliers/vosdroits/F followed by numbers
+		// Example: /particuliers/vosdroits/F16225
+		// Explicitly reject:
+		// - Category pages (N-prefix): /particuliers/vosdroits/N20020
+		// - Other paths that don't contain /F
+		if strings.Contains(href, "/N") || !strings.Contains(href, "/F") {
+			return
+		}
+
+		// Additional validation: ensure it's specifically /vosdroits/F pattern
+		// This prevents matching other F-prefixed URLs
+		if !strings.Contains(href, "/vosdroits/F") {
+			return
+		}
+
+		// Get the title - extract from the tile text
+		title := strings.TrimSpace(e.Text)
+		if title == "" {
+			return
+		}
+
+		// Make URL absolute
+		fullURL := e.Request.AbsoluteURL(href)
+
+		// Check for duplicates
+		for _, event := range events {
+			if event.URL == fullURL {
+				return
+			}
+		}
+
+		events = append(events, LifeEvent{
+			Title:       title,
+			URL:         fullURL,
+			Description: fmt.Sprintf("Information and procedures for: %s", title),
+		})
+	})
+
+	// Handle errors
+	scraper.OnError(func(r *colly.Response, err error) {
+		select {
+		case errorChan <- fmt.Errorf("failed to fetch life events: %w", err):
+		default:
+		}
+	})
+
+	// Visit the "comment faire si" page
+	if err := scraper.Visit(c.baseURL + "/particuliers/vosdroits/comment-faire-si"); err != nil {
+		return nil, fmt.Errorf("failed to visit comment-faire-si page: %w", err)
+	}
+
+	// Wait for scraping to complete
+	scraper.Wait()
+
+	// Check for errors
+	select {
+	case err := <-errorChan:
+		if len(events) == 0 {
+			return nil, err
+		}
+		// If we got some results, return them despite the error
+	default:
+	}
+
+	if len(events) == 0 {
+		return nil, fmt.Errorf("no life events found")
+	}
+
+	return events, nil
+}
+
+// LifeEventSection represents a section within a life event page.
+type LifeEventSection struct {
+	Title   string
+	Content string
+}
+
+// LifeEventDetails represents detailed information about a life event.
+type LifeEventDetails struct {
+	Title        string
+	URL          string
+	Introduction string
+	Sections     []LifeEventSection
+}
+
+// GetLifeEventDetails retrieves detailed information about a specific life event.
+func (c *Client) GetLifeEventDetails(ctx context.Context, eventURL string) (*LifeEventDetails, error) {
+	// Check context cancellation
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	// Validate URL
+	if eventURL == "" {
+		return nil, fmt.Errorf("URL cannot be empty")
+	}
+
+	parsedURL, err := url.Parse(eventURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URL: %w", err)
+	}
+
+	// Ensure it's a service-public.gouv.fr URL
+	if parsedURL.Host == "" {
+		eventURL = c.baseURL + eventURL
+		parsedURL, err = url.Parse(eventURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid URL after making absolute: %w", err)
+		}
+	}
+
+	// Validate domain
+	host := strings.ToLower(parsedURL.Host)
+	validDomains := []string{
+		"service-public.gouv.fr",
+		"www.service-public.gouv.fr",
+		"service-public.fr",
+		"www.service-public.fr",
+	}
+
+	domainValid := false
+	for _, validDomain := range validDomains {
+		if host == validDomain {
+			domainValid = true
+			break
+		}
+	}
+
+	if !domainValid {
+		return nil, fmt.Errorf("URL must be from service-public.gouv.fr domain, got: %s", parsedURL.Host)
+	}
+
+	// Validate that this is a fiche pratique page (F-URL), not a category page (N-prefix)
+	// Life event fiche pages: /particuliers/vosdroits/F16225
+	// Category pages: /particuliers/vosdroits/N19808
+	if strings.Contains(parsedURL.Path, "/N") {
+		return nil, fmt.Errorf("URL must be a life event page (F-prefix), not a category page (N-prefix). Got: %s", eventURL)
+	}
+	if !strings.Contains(parsedURL.Path, "/vosdroits/F") {
+		return nil, fmt.Errorf("URL must be a life event fiche pratique page (/vosdroits/F...). Got: %s", eventURL)
+	}
+
+	var details LifeEventDetails
+	details.URL = eventURL
+	errorChan := make(chan error, 1)
+
+	// Clone the collector
+	scraper := c.collector.Clone()
+
+	// Allow URL revisits to prevent "already visited" errors on repeated calls
+	scraper.AllowURLRevisit = true
+
+	// Set up context cancellation
+	done := make(chan struct{})
+	defer close(done)
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			scraper = nil
+		case <-done:
+		}
+	}()
+
+	// Extract title
+	scraper.OnHTML("h1, h1.fr-h1", func(e *colly.HTMLElement) {
+		if details.Title == "" {
+			details.Title = strings.TrimSpace(e.Text)
+		}
+	})
+
+	// Extract introduction
+	scraper.OnHTML("div#intro p, p.fr-text--lg", func(e *colly.HTMLElement) {
+		text := strings.TrimSpace(e.Text)
+		if text != "" && details.Introduction == "" {
+			details.Introduction = text
+		}
+	})
+
+	// Extract sections - using the accordion structure
+	// Each section is a fr-accordion with an accordion__btn containing the title
+	scraper.OnHTML("section.fr-accordion[data-test='div-chapter']", func(e *colly.HTMLElement) {
+		// Get section title from the accordion button
+		sectionTitle := strings.TrimSpace(e.ChildText(".sp-accordion-chapter-btn-text"))
+		if sectionTitle == "" {
+			return
+		}
+
+		// Skip questionnaire sections
+		if strings.Contains(sectionTitle, "Votre situation") {
+			return
+		}
+
+		// Extract content from the collapse div
+		var contentParts []string
+
+		// Get all paragraphs and lists from the section content
+		e.ForEach("div.sp-chapter-content p[data-test='contenu-texte'], div.sp-chapter-content ul.sp-item-list li, div.sp-chapter-content div.fr-highlight p", func(_ int, elem *colly.HTMLElement) {
+			text := strings.TrimSpace(elem.Text)
+			if text != "" && len(text) > 10 {
+				// Filter out unwanted content
+				if !strings.Contains(text, "javascript") &&
+					!strings.Contains(text, "Abonnement") &&
+					!strings.Contains(text, "Cette page vous a-t-elle") {
+					contentParts = append(contentParts, text)
+				}
+			}
+		})
+
+		// Only add section if it has content
+		if len(contentParts) > 0 {
+			details.Sections = append(details.Sections, LifeEventSection{
+				Title:   sectionTitle,
+				Content: strings.Join(contentParts, "\n\n"),
+			})
+		}
+	})
+
+	// Handle HTTP responses
+	scraper.OnResponse(func(r *colly.Response) {
+		if r.StatusCode == 404 {
+			select {
+			case errorChan <- fmt.Errorf("life event not found (404) at URL: %s", r.Request.URL):
+			default:
+			}
+		} else if r.StatusCode >= 400 {
+			select {
+			case errorChan <- fmt.Errorf("HTTP error %d at URL: %s", r.StatusCode, r.Request.URL):
+			default:
+			}
+		}
+	})
+
+	// Handle errors
+	scraper.OnError(func(r *colly.Response, err error) {
+		statusMsg := ""
+		if r != nil {
+			statusMsg = fmt.Sprintf(" (HTTP %d)", r.StatusCode)
+		}
+		select {
+		case errorChan <- fmt.Errorf("failed to fetch life event%s: %w", statusMsg, err):
+		default:
+		}
+	})
+
+	// Visit the life event page
+	if err := scraper.Visit(eventURL); err != nil {
+		return nil, fmt.Errorf("failed to visit life event page: %w", err)
+	}
+
+	// Wait for scraping to complete
+	scraper.Wait()
+
+	// Check for errors
+	select {
+	case err := <-errorChan:
+		return nil, err
+	default:
+	}
+
+	// Validate that we got content
+	if details.Title == "" {
+		details.Title = "Life Event from service-public.gouv.fr"
+	}
+	if details.Introduction == "" && len(details.Sections) == 0 {
+		return nil, fmt.Errorf("no content found at URL: %s", eventURL)
+	}
+
+	return &details, nil
 }

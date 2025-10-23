@@ -4,13 +4,15 @@ A Model Context Protocol (MCP) server that provides search and retrieval capabil
 
 ## Description
 
-This MCP server enables AI assistants to search and retrieve official French administrative procedures and tax information. Built with Go and powered by intelligent web scraping, it provides six main capabilities:
+This MCP server enables AI assistants to search and retrieve official French administrative procedures and tax information. Built with Go and powered by intelligent web scraping, it provides eight main capabilities:
 
 ### Service-Public.gouv.fr Tools
 
 - **search_procedures**: Find relevant public service procedures and articles
 - **get_article**: Retrieve complete information from specific service-public.gouv.fr articles
 - **list_categories**: Browse available categories of public service information
+- **list_life_events**: List all available life events (événements de vie) guides
+- **get_life_event_details**: Retrieve detailed information about specific life situations
 
 ### Impots.gouv.fr Tools
 
@@ -237,7 +239,21 @@ After adding the configuration, restart Claude Desktop. The server will be avail
 
 ## Available Tools
 
-The server provides six MCP tools across two domains:
+The server provides eight MCP tools across two domains:
+
+### Which Tool Should I Use?
+
+**For major life situations** (buying a house, getting married, having a baby, death, moving, retirement, etc.):
+- 🎯 **Start with `list_life_events`** - comprehensive guides organized by topic
+- Then use **`get_life_event_details`** with a URL to get all procedures
+
+**For specific administrative procedures** (passport renewal, driver's license, etc.):
+- 🔍 **Use `search_procedures`** - targeted search for specific procedures
+- Then use **`get_article`** to get full details
+
+**For tax information**:
+- 💰 **Use `search_impots`** for forms and tax procedures
+- Then use **`get_impots_article`** for detailed information
 
 ### Service-Public.gouv.fr Tools
 
@@ -270,6 +286,34 @@ List available categories of public service information.
 
 **Output:**
 - `categories`: Array of available categories with name and description
+
+#### 4. list_life_events
+
+List all available life events (événements de vie) from the "Comment faire si" section of service-public.gouv.fr. These are comprehensive practical guides for major life situations like expecting a child, moving, retirement, etc.
+
+**Output:**
+- `events`: Array of life events with title, URL, and description
+
+**Example events:**
+- "J'attends un enfant" (Expecting a child)
+- "Je déménage en France" (Moving within France)
+- "Un proche est décédé" (Death of a loved one)
+- "Je prépare ma retraite" (Preparing for retirement)
+
+#### 5. get_life_event_details
+
+Retrieve detailed information about a specific life event, including all sections organized by topic (Health, Civil Status, Employment, etc.).
+
+**Input:**
+- `url` (string): URL of the life event to retrieve (from list_life_events results)
+
+**Output:**
+- `title`: Life event title
+- `url`: Life event URL
+- `introduction`: Overview text
+- `sections`: Array of detailed sections with title and content
+
+**See also:** [Life Events Documentation](docs/LIFE_EVENTS.md)
 
 ### Impots.gouv.fr Tools
 
