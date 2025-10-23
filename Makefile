@@ -1,4 +1,4 @@
-.PHONY: build test clean run docker-build docker-run fmt vet tidy release-build
+.PHONY: build test clean run docker-build docker-run fmt vet tidy release-build release-tag
 
 # Build the binary
 build:
@@ -14,6 +14,27 @@ release-build:
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags="-w -s" -o bin/release/mcp-vosdroits-darwin-arm64 ./cmd/server
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="-w -s" -o bin/release/mcp-vosdroits-windows-amd64.exe ./cmd/server
 	@echo "Release binaries built in bin/release/"
+
+# Create and push a release tag
+# Usage: make release-tag VERSION=v1.0.0
+release-tag:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ ERROR: VERSION is required. Usage: make release-tag VERSION=v1.0.0"; \
+		exit 1; \
+	fi
+	@echo "Creating release tag $(VERSION)..."
+	@if git rev-parse "$(VERSION)" >/dev/null 2>&1; then \
+		echo "❌ ERROR: Tag $(VERSION) already exists"; \
+		exit 1; \
+	fi
+	@git tag -a $(VERSION) -m "Release $(VERSION)"
+	@echo "✅ Created tag $(VERSION)"
+	@echo "Pushing tag to origin..."
+	@git push origin $(VERSION)
+	@echo "✅ Tag pushed successfully"
+	@echo ""
+	@echo "🚀 Release workflow triggered for $(VERSION)"
+	@echo "   Monitor: https://github.com/guigui42/mcp-vosdroits/actions"
 
 # Run tests
 test:
