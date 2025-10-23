@@ -15,6 +15,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+var version = "dev"
+
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
@@ -24,6 +26,11 @@ func main() {
 func run() error {
 	// Load configuration
 	cfg := config.Load()
+
+	// Override version if set at build time
+	if version != "dev" {
+		cfg.ServerVersion = version
+	}
 
 	// Set up logging
 	setupLogging(cfg.LogLevel)

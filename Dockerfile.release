@@ -1,0 +1,26 @@
+# Release Dockerfile that uses pre-built binaries
+# This is used by the release workflow to avoid rebuilding binaries
+FROM alpine:latest
+
+ARG TARGETARCH
+ARG VERSION=v1.0.0
+
+# Install CA certificates for HTTPS requests
+RUN apk --no-cache add ca-certificates tzdata && \
+    adduser -D -u 1000 appuser
+
+WORKDIR /app
+
+# Copy the pre-built binary for the target architecture
+COPY dist-${TARGETARCH}/mcp-vosdroits-linux-${TARGETARCH} /app/mcp-vosdroits
+RUN chmod +x /app/mcp-vosdroits
+
+# Run as non-root user
+USER appuser
+
+# Set environment variables
+ENV SERVER_NAME=vosdroits \
+    SERVER_VERSION=${VERSION} \
+    LOG_LEVEL=info
+
+ENTRYPOINT ["/app/mcp-vosdroits"]

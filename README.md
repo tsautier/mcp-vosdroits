@@ -22,6 +22,24 @@ This MCP server enables AI assistants to search and retrieve official French adm
 
 ## Installation
 
+### Download Pre-Built Binaries
+
+Download the latest release for your platform from the [Releases page](https://github.com/guigui42/mcp-vosdroits/releases).
+
+Available platforms:
+- **Linux**: amd64, arm64
+- **macOS**: amd64 (Intel), arm64 (Apple Silicon)
+- **Windows**: amd64
+
+```bash
+# Example: Download and run Linux binary
+curl -LO https://github.com/guigui42/mcp-vosdroits/releases/latest/download/mcp-vosdroits-linux-amd64
+chmod +x mcp-vosdroits-linux-amd64
+./mcp-vosdroits-linux-amd64
+```
+
+All binaries include SHA256 checksums for verification.
+
 ### Using Docker (Recommended)
 
 Pull and run the official image from GitHub Container Registry:
@@ -363,6 +381,7 @@ List available categories of tax information on impots.gouv.fr.
 
 For developers and contributors:
 - [Development Guide](docs/DEVELOPMENT.md) - Local development, testing, and contribution guidelines
+- [Release Process](docs/RELEASE.md) - How releases are created and automated
 - [Web Scraping Implementation](docs/SCRAPING.md) - Technical details on service-public.gouv.fr scraping
 - [Colly Integration Guide](docs/COLLY_INTEGRATION.md) - Web scraping framework documentation
 
