@@ -3,15 +3,24 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /build
 
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates
+
 # Copy dependency files first for better layer caching
 COPY go.mod go.sum ./
-RUN go mod download
+
+# Download dependencies with cache mount for faster rebuilds
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 # Copy source code
 COPY . .
 
-# Build statically-linked binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o mcp-vosdroits ./cmd/server
+# Build statically-linked binary with build cache
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags="-w -s" -o mcp-vosdroits ./cmd/server
 
 # Production stage
 FROM scratch

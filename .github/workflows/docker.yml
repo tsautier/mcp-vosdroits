@@ -68,3 +68,5 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: |
           BUILDKIT_INLINE_CACHE=1
+        provenance: false
+        sbom: false
