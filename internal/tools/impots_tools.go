@@ -119,7 +119,15 @@ func registerGetImpotsArticle(server *mcp.Server, impotsClient *client.ImpotsCli
 
 		article, err := impotsClient.GetImpotsArticle(ctx, input.URL)
 		if err != nil {
-			return nil, GetImpotsArticleOutput{}, fmt.Errorf("failed to get article: %w", err)
+			// Return a clear error message that discourages retrying the same URL
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{
+						Text: fmt.Sprintf("ERROR: Unable to retrieve tax document from %s. Reason: %v\n\nDo NOT retry this same URL. Instead, inform the user that this specific document could not be retrieved and suggest they visit the URL directly in their browser, or try searching for alternative tax documents.", input.URL, err),
+					},
+				},
+				IsError: true,
+			}, GetImpotsArticleOutput{}, fmt.Errorf("failed to get article from %s: %w", input.URL, err)
 		}
 
 		output := GetImpotsArticleOutput{
@@ -133,7 +141,7 @@ func registerGetImpotsArticle(server *mcp.Server, impotsClient *client.ImpotsCli
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{
-					Text: fmt.Sprintf("Retrieved tax document: %s", article.Title),
+					Text: fmt.Sprintf("Retrieved tax document: %s\n\nSource: %s\n\nIMPORTANT: Always provide this source URL to the user so they can access the original document.", article.Title, article.URL),
 				},
 			},
 		}, output, nil

@@ -139,7 +139,15 @@ func registerGetArticle(server *mcp.Server, httpClient *client.Client) error {
 		// TODO: Implement actual article retrieval using client
 		article, err := httpClient.GetArticle(ctx, input.URL)
 		if err != nil {
-			return nil, GetArticleOutput{}, fmt.Errorf("failed to get article: %w", err)
+			// Return a clear error message that discourages retrying the same URL
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{
+						Text: fmt.Sprintf("ERROR: Unable to retrieve article from %s. Reason: %v\n\nDo NOT retry this same URL. Instead, inform the user that this specific article could not be retrieved and suggest they visit the URL directly in their browser, or try searching for alternative procedures.", input.URL, err),
+					},
+				},
+				IsError: true,
+			}, GetArticleOutput{}, fmt.Errorf("failed to get article from %s: %w", input.URL, err)
 		}
 
 		output := GetArticleOutput{
@@ -151,7 +159,7 @@ func registerGetArticle(server *mcp.Server, httpClient *client.Client) error {
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{
-					Text: fmt.Sprintf("Retrieved article: %s", article.Title),
+					Text: fmt.Sprintf("Retrieved article: %s\n\nSource: %s\n\nIMPORTANT: Always provide this source URL to the user so they can access the original article.", article.Title, article.URL),
 				},
 			},
 		}, output, nil
