@@ -170,13 +170,30 @@ func (c *ImpotsClient) GetImpotsArticle(ctx context.Context, articleURL string) 
 		return nil, err
 	}
 
+	// Validate URL is not empty
+	if articleURL == "" {
+		return nil, fmt.Errorf("URL cannot be empty")
+	}
+
 	parsedURL, err := url.Parse(articleURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
-	if !strings.Contains(parsedURL.Host, "impots.gouv.fr") {
-		return nil, fmt.Errorf("URL must be from impots.gouv.fr domain")
+	// Ensure it's an impots.gouv.fr URL (check for empty host or relative URLs)
+	if parsedURL.Host == "" {
+		// Handle relative URLs by making them absolute
+		articleURL = c.baseURL + articleURL
+		parsedURL, err = url.Parse(articleURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid URL after making absolute: %w", err)
+		}
+	}
+
+	// Check domain - accept both www.impots.gouv.fr and impots.gouv.fr
+	host := strings.ToLower(parsedURL.Host)
+	if host != "impots.gouv.fr" && host != "www.impots.gouv.fr" {
+		return nil, fmt.Errorf("URL must be from impots.gouv.fr domain, got: %s", parsedURL.Host)
 	}
 
 	var article ImpotsArticle

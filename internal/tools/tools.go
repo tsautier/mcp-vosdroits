@@ -43,26 +43,26 @@ func RegisterTools(server *mcp.Server, cfg *config.Config) error {
 
 // SearchProceduresInput defines the input schema for search_procedures.
 type SearchProceduresInput struct {
-	Query string `json:"query" jsonschema:"Search query for procedures"`
-	Limit int    `json:"limit,omitempty" jsonschema:"Maximum number of results to return (1-100)"`
+	Query string `json:"query" jsonschema:"Search query for procedures (e.g. 'carte d'identité' or 'passport renewal')"`
+	Limit int    `json:"limit,omitempty" jsonschema:"Maximum number of results to return (1-100), default 10"`
 }
 
 // SearchProceduresOutput defines the output schema for search_procedures.
 type SearchProceduresOutput struct {
-	Results []ProcedureResult `json:"results" jsonschema:"List of matching procedures"`
+	Results []ProcedureResult `json:"results" jsonschema:"List of matching procedures. Each result includes a URL that can be used with the get_article tool to retrieve full details."`
 }
 
 // ProcedureResult represents a single procedure search result.
 type ProcedureResult struct {
 	Title       string `json:"title" jsonschema:"Title of the procedure"`
-	URL         string `json:"url" jsonschema:"URL to the procedure page"`
-	Description string `json:"description" jsonschema:"Brief description of the procedure"`
+	URL         string `json:"url" jsonschema:"URL to the procedure page. Use this URL with the get_article tool to retrieve complete information."`
+	Description string `json:"description" jsonschema:"Brief summary. For full content, requirements, and instructions, use get_article with this URL."`
 }
 
 func registerSearchProcedures(server *mcp.Server, httpClient *client.Client) error {
 	tool := &mcp.Tool{
 		Name:        "search_procedures",
-		Description: "Search for procedures on service-public.gouv.fr",
+		Description: "Search for procedures on service-public.gouv.fr. Returns URLs and brief descriptions. For detailed information about any procedure, use the get_article tool with the returned URLs.",
 	}
 
 	handler := func(ctx context.Context, req *mcp.CallToolRequest, input SearchProceduresInput) (*mcp.CallToolResult, SearchProceduresOutput, error) {
@@ -94,10 +94,16 @@ func registerSearchProcedures(server *mcp.Server, httpClient *client.Client) err
 			}
 		}
 
+		// Create helpful message that encourages follow-up
+		message := fmt.Sprintf("Found %d procedures matching '%s'. ", len(results), input.Query)
+		if len(results) > 0 {
+			message += "Use the get_article tool with any of the returned URLs to retrieve complete details about a specific procedure."
+		}
+
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{
-					Text: fmt.Sprintf("Found %d procedures", len(results)),
+					Text: message,
 				},
 			},
 		}, output, nil
@@ -109,7 +115,7 @@ func registerSearchProcedures(server *mcp.Server, httpClient *client.Client) err
 
 // GetArticleInput defines the input schema for get_article.
 type GetArticleInput struct {
-	URL string `json:"url" jsonschema:"URL of the article to retrieve"`
+	URL string `json:"url" jsonschema:"URL of the article to retrieve (typically from search_procedures results)"`
 }
 
 // GetArticleOutput defines the output schema for get_article.
@@ -122,7 +128,7 @@ type GetArticleOutput struct {
 func registerGetArticle(server *mcp.Server, httpClient *client.Client) error {
 	tool := &mcp.Tool{
 		Name:        "get_article",
-		Description: "Retrieve detailed information from a specific article URL on service-public.gouv.fr",
+		Description: "Retrieve detailed article content from service-public.gouv.fr URLs. Use this after search_procedures to get complete information about a specific procedure, including full text, requirements, and step-by-step instructions.",
 	}
 
 	handler := func(ctx context.Context, req *mcp.CallToolRequest, input GetArticleInput) (*mcp.CallToolResult, GetArticleOutput, error) {

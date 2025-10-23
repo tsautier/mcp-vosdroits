@@ -22,7 +22,12 @@ type Client struct {
 func New(timeout time.Duration) *Client {
 	// Create a new Colly collector with configuration
 	c := colly.NewCollector(
-		colly.AllowedDomains("www.service-public.gouv.fr", "service-public.gouv.fr"),
+		colly.AllowedDomains(
+			"www.service-public.gouv.fr",
+			"service-public.gouv.fr",
+			"www.service-public.fr",
+			"service-public.fr",
+		),
 		colly.UserAgent("VosDroits-MCP-Server/1.0"),
 		colly.Async(false),
 	)
@@ -32,7 +37,7 @@ func New(timeout time.Duration) *Client {
 
 	// Configure rate limiting to be respectful
 	err := c.Limit(&colly.LimitRule{
-		DomainGlob:  "*.service-public.gouv.fr",
+		DomainGlob:  "*.service-public.*",
 		Parallelism: 1,
 		Delay:       1 * time.Second,
 	})
@@ -191,15 +196,46 @@ func (c *Client) GetArticle(ctx context.Context, articleURL string) (*Article, e
 		return nil, err
 	}
 
+	// Validate URL is not empty
+	if articleURL == "" {
+		return nil, fmt.Errorf("URL cannot be empty")
+	}
+
 	// Validate URL
 	parsedURL, err := url.Parse(articleURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
-	// Ensure it's a service-public.gouv.fr URL
-	if !strings.Contains(parsedURL.Host, "service-public.gouv.fr") {
-		return nil, fmt.Errorf("URL must be from service-public.gouv.fr domain")
+	// Ensure it's a service-public.gouv.fr URL (check for empty host or relative URLs)
+	if parsedURL.Host == "" {
+		// Handle relative URLs by making them absolute
+		articleURL = c.baseURL + articleURL
+		parsedURL, err = url.Parse(articleURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid URL after making absolute: %w", err)
+		}
+	}
+
+	// Check domain - accept service-public.gouv.fr and service-public.fr (both with and without www)
+	host := strings.ToLower(parsedURL.Host)
+	validDomains := []string{
+		"service-public.gouv.fr",
+		"www.service-public.gouv.fr",
+		"service-public.fr",
+		"www.service-public.fr",
+	}
+
+	domainValid := false
+	for _, validDomain := range validDomains {
+		if host == validDomain {
+			domainValid = true
+			break
+		}
+	}
+
+	if !domainValid {
+		return nil, fmt.Errorf("URL must be from service-public.gouv.fr or service-public.fr domain, got: %s", parsedURL.Host)
 	}
 
 	var article Article
@@ -257,10 +293,29 @@ func (c *Client) GetArticle(ctx context.Context, articleURL string) (*Article, e
 		}
 	})
 
+	// Handle HTTP responses to detect 404s and other errors
+	scraper.OnResponse(func(r *colly.Response) {
+		if r.StatusCode == 404 {
+			select {
+			case errorChan <- fmt.Errorf("article not found (404) at URL: %s", r.Request.URL):
+			default:
+			}
+		} else if r.StatusCode >= 400 {
+			select {
+			case errorChan <- fmt.Errorf("HTTP error %d at URL: %s", r.StatusCode, r.Request.URL):
+			default:
+			}
+		}
+	})
+
 	// Handle errors
 	scraper.OnError(func(r *colly.Response, err error) {
+		statusMsg := ""
+		if r != nil {
+			statusMsg = fmt.Sprintf(" (HTTP %d)", r.StatusCode)
+		}
 		select {
-		case errorChan <- fmt.Errorf("failed to fetch article: %w", err):
+		case errorChan <- fmt.Errorf("failed to fetch article%s: %w", statusMsg, err):
 		default:
 		}
 	})

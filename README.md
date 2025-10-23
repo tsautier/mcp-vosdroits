@@ -172,6 +172,69 @@ Configure custom environment variables for logging and timeout:
 
 After adding the configuration, restart your terminal or run `gh copilot reload` to load the new MCP server.
 
+### Claude Desktop
+
+To use this MCP server with Claude Desktop, add the configuration to your MCP settings file:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+**Using Docker Image (Recommended):**
+
+```json
+{
+  "mcpServers": {
+    "vosdroits": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/guigui42/mcp-vosdroits:latest"
+      ]
+    }
+  }
+}
+```
+
+**Using Local Binary:**
+
+If you've built the server from source:
+
+```json
+{
+  "mcpServers": {
+    "vosdroits": {
+      "command": "/absolute/path/to/mcp-vosdroits/bin/mcp-vosdroits",
+      "args": []
+    }
+  }
+}
+```
+
+**With Environment Variables:**
+
+Configure custom environment variables for logging and timeout:
+
+```json
+{
+  "mcpServers": {
+    "vosdroits": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "LOG_LEVEL=debug",
+        "-e", "HTTP_TIMEOUT=60s",
+        "ghcr.io/guigui42/mcp-vosdroits:latest"
+      ]
+    }
+  }
+}
+```
+
+After adding the configuration, restart Claude Desktop. The server will be available, and you can use the available tools to query French public service and tax information.
+
 ## Available Tools
 
 The server provides six MCP tools across two domains:
