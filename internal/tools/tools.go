@@ -137,7 +137,7 @@ type GetArticleOutput struct {
 func registerGetArticle(server *mcp.Server, httpClient *client.Client) error {
 	tool := &mcp.Tool{
 		Name:        "get_article",
-		Description: "Retrieve detailed article content from service-public.gouv.fr URLs. Use this after search_procedures to get complete information about a specific procedure, including full text, requirements, and step-by-step instructions.",
+		Description: "Retrieve detailed article content from service-public.gouv.fr URLs ONLY. Use this after search_procedures to get complete information about a specific procedure, including full text, requirements, and step-by-step instructions. WARNING: This tool ONLY works with service-public.fr domain. For impots.gouv.fr URLs (tax services), use get_impots_article instead.",
 	}
 
 	handler := func(ctx context.Context, req *mcp.CallToolRequest, input GetArticleInput) (*mcp.CallToolResult, GetArticleOutput, error) {

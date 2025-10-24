@@ -4,6 +4,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/guigui42/mcp-vosdroits/internal/client"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -49,7 +50,7 @@ type ImpotsResult struct {
 func registerSearchImpots(server *mcp.Server, impotsClient *client.ImpotsClient) error {
 	tool := &mcp.Tool{
 		Name:        "search_impots",
-		Description: "Search for tax forms, articles, and procedures on impots.gouv.fr",
+		Description: "Search for tax forms, articles, and procedures on impots.gouv.fr ONLY. WARNING: This tool ONLY works with impots.gouv.fr domain (French tax services). For service-public.fr URLs, use search_procedures instead.",
 	}
 
 	handler := func(ctx context.Context, req *mcp.CallToolRequest, input SearchImpotsInput) (*mcp.CallToolResult, SearchImpotsOutput, error) {
@@ -109,12 +110,24 @@ type GetImpotsArticleOutput struct {
 func registerGetImpotsArticle(server *mcp.Server, impotsClient *client.ImpotsClient) error {
 	tool := &mcp.Tool{
 		Name:        "get_impots_article",
-		Description: "Retrieve detailed information from a specific tax article or form URL on impots.gouv.fr",
+		Description: "Retrieve detailed information from a specific tax article or form URL on impots.gouv.fr ONLY. CRITICAL: URL MUST be from impots.gouv.fr domain (French tax services). For service-public.fr URLs, use get_article tool instead. Do NOT use this tool with service-public.fr URLs.",
 	}
 
 	handler := func(ctx context.Context, req *mcp.CallToolRequest, input GetImpotsArticleInput) (*mcp.CallToolResult, GetImpotsArticleOutput, error) {
 		if input.URL == "" {
 			return nil, GetImpotsArticleOutput{}, fmt.Errorf("url cannot be empty")
+		}
+
+		// Check if URL is from service-public.fr domain and provide helpful error
+		if strings.Contains(input.URL, "service-public.fr") {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{
+						Text: fmt.Sprintf("ERROR: WRONG TOOL! The URL %s is from service-public.fr domain.\n\nget_impots_article tool ONLY works with impots.gouv.fr URLs (French tax services).\n\nCORRECT TOOL TO USE: get_article (for service-public.fr URLs)\n\nPlease use the get_article tool instead to retrieve this document.", input.URL),
+					},
+				},
+				IsError: true,
+			}, GetImpotsArticleOutput{}, fmt.Errorf("wrong domain: URL is from service-public.fr but this tool only works with impots.gouv.fr - use get_article tool instead")
 		}
 
 		article, err := impotsClient.GetImpotsArticle(ctx, input.URL)
